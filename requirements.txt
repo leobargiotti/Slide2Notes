@@ -1,0 +1,10 @@
+PyQt6
+python-dotenv
+requests
+PyQt6-sip
+python-docx
+python-pptx
+fitz
+docx
+reportlab
+pillow
