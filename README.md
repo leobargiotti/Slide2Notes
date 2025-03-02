@@ -84,9 +84,9 @@ This is a software interface for generating a word summary from PDF and PPTX fil
 ![app.png](./images/app.png)
 
 This is a dark-themed pop-up window prompting the user to provide a file name, tags, and location to save a summary.
-<div style="text-align: center;">
+<p align="center">
     <img src="./images/pop_up_output.png" alt="output" width="700"/>
-</div>
+</p>
 
 
 
