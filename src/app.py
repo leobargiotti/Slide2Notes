@@ -310,7 +310,7 @@ class DocumentSummaryApp(QMainWindow):
             except Exception as e:
                 error_msg = f"Error processing {os.path.basename(file_path)}: {str(e)}"
                 summaries.append({
-                    'title': f"Section {i + 1}: {os.path.basename(file_path)}",
+                    'title': f"{i + 1}. {os.path.splitext(os.path.basename(file_path))[0]}",
                     'content': error_msg
                 })
 

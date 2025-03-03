@@ -238,7 +238,7 @@ def extract_text_from_pptx(file_path):
         if slide.has_notes_slide:
             notes_slide = slide.notes_slide
             for shape in notes_slide.shapes:
-                if hasattr(shape, "text"):
+                if hasattr(shape, "text") and shape.text.strip():
                     text += f"\nNote: {shape.text}"
     return text
 
@@ -307,13 +307,9 @@ def extract_text_and_images_from_pptx(file_path):
         # Extract slide notes
         if slide.has_notes_slide:
             notes_slide = slide.notes_slide
-            notes_text = []
             for shape in notes_slide.shapes:
                 if hasattr(shape, "text") and shape.text.strip():
-                    notes_text.append(shape.text.strip())
-
-            if notes_text:
-                text += "\nNotes: " + " ".join(notes_text) + "\n"
+                    text += f"\nNote: {shape.text}"
 
     return text
 
