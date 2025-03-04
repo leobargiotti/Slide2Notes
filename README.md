@@ -23,7 +23,7 @@ This project provides a user-friendly graphical interface (GUI) built with PyQt6
 
 1. Clone the repository:
    ```bash
-   git clone <repository_url>
+   git clone https://github.com/leobargiotti/Slide2Notes
    ```
 2. Create a virtual environment (recommended):
    ```bash
