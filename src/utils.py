@@ -407,25 +407,27 @@ def extract_text_and_images_from_pdf(file_path):
     pdf_document.close()
     return text
 
+
 def create_summary_prompt(text, target_language):
     """
-    Create a detailed and comprehensive summary prompt for the given content in the specified target language,
-    with strong emphasis on fully incorporating notes and image descriptions.
+    Create a fully expanded and cohesive textual version of the given content in the specified target language.
+    The output must preserve all information while transforming it into a natural, readable narrative.
 
     Parameters:
-    - text (str): The content to be summarized, including main text, notes, and image descriptions.
-    - target_language (str): The language in which the summary should be provided.
+    - text (str): The full content, including main text, notes, and image descriptions.
+    - target_language (str): The language in which the expanded text should be provided.
 
     Returns:
-    - str: A formatted prompt string for generating the summary.
+    - str: A formatted prompt string for generating the expanded text.
     """
-    return f"""Please provide a highly detailed and comprehensive summary of the following content in {target_language}.
+    return f"""Please rewrite the following content in {target_language} as a fully expanded, well-structured, and cohesive text. 
 
-            CRITICAL INSTRUCTION: This is NOT just a summary of the main text. You MUST give EQUAL IMPORTANCE to:
+            CRITICAL INSTRUCTION: You MUST include EVERYTHING from:
             1. The main text
             2. All notes (marked with "Note:")
-            3. All image descriptions (marked with [Image Description:])
-            
+            3. All image descriptions (marked with "Image Description:")
+
+            DO NOT OMIT any detail. Instead of summarizing, you should seamlessly integrate all these elements into a well-written, natural, and engaging narrative. 
             Particularly for graphs, diagrams, charts, or visual elements described in the image descriptions, you MUST incorporate their complete content and meaning as if they were part of the main text. Do not abbreviate or condense image descriptions - fully explain what they show.
             
             The final summary should be a seamless integration of ALL information sources (main text, notes, and images), creating a complete and coherent narrative as if the information was all presented together originally without specify Note or Slide number.
@@ -434,3 +436,4 @@ def create_summary_prompt(text, target_language):
             {text}
             
             Your summary should be well-structured and engaging, resembling a carefully written article. Avoid excessive conciseness or bullet-point formats. The reader should not be able to tell which parts came from notes or image descriptions versus the main text - it should all flow naturally as one cohesive document."""
+
