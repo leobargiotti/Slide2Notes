@@ -1,7 +1,8 @@
 import sys
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QPushButton, QFileDialog, QComboBox, QLabel, QProgressBar,
-                             QListWidget, QHBoxLayout, QCheckBox, QMessageBox)
+                             QListWidget, QHBoxLayout, QCheckBox, QMessageBox, QProgressDialog)
 import os
 from dotenv import load_dotenv
 from languages import TRANSLATIONS
@@ -81,7 +82,7 @@ class DocumentSummaryApp(QMainWindow):
         image_layout = QHBoxLayout()
         self.image_checkbox = QCheckBox("Include Images")
         self.image_checkbox.setChecked(False)
-        self.image_checkbox.stateChanged.connect(self.toggle_image_extraction)
+        self.image_checkbox.stateChanged.connect(self.toggle_image_extraction)  # type: ignore
         image_layout.addWidget(self.image_checkbox)
         image_layout.addStretch()
 
@@ -273,11 +274,36 @@ class DocumentSummaryApp(QMainWindow):
         if not self.input_files:
             return
 
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setMaximum(len(self.input_files))
-        self.progress_bar.setValue(0)
+        total_pages = 0
+        file_page_counts = {}
+
+        for file_path in self.input_files:
+            file_extension = os.path.splitext(file_path)[1].lower()
+            try:
+                if file_extension == '.pdf':
+                    import PyPDF2
+                    with open(file_path, 'rb') as file:
+                        pdf_reader = PyPDF2.PdfReader(file)
+                        page_count = len(pdf_reader.pages)
+                elif file_extension == '.pptx':
+                    from pptx import Presentation
+                    ppt = Presentation(file_path)
+                    page_count = len(ppt.slides)
+                else:
+                    page_count = 0
+
+                file_page_counts[file_path] = page_count
+                total_pages += page_count
+            except Exception as e:
+                print(f"Error counting pages in {file_path}: {e}")
+                file_page_counts[file_path] = 0
+
+        progress = QProgressDialog("Processing Files...", None, 0, total_pages, self)
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.show()
 
         summaries = []
+        current_page_progress = 0
 
         for i, file_path in enumerate(self.input_files):
             # Extract text based on file type
@@ -287,14 +313,14 @@ class DocumentSummaryApp(QMainWindow):
             try:
                 if file_extension == '.pdf':
                     if self.extract_images:
-                        text = extract_text_and_images_from_pdf(file_path)
+                        text, extracted_pages = extract_text_and_images_from_pdf(file_path)
                     else:
-                        text = extract_text_from_pdf(file_path)
+                        text, extracted_pages = extract_text_from_pdf(file_path)
                 elif file_extension == '.pptx':
                     if self.extract_images:
-                        text = extract_text_and_images_from_pptx(file_path)
+                        text, extracted_pages = extract_text_and_images_from_pptx(file_path)
                     else:
-                        text = extract_text_from_pptx(file_path)
+                        text, extracted_pages = extract_text_from_pptx(file_path)
                 else:
                     continue
 
@@ -307,14 +333,17 @@ class DocumentSummaryApp(QMainWindow):
                     'content': section_content
                 })
 
+                # Update progress bar
+                current_page_progress += extracted_pages
+                progress.setValue(current_page_progress)
+                QApplication.processEvents()  # Ensure UI updates
+
             except Exception as e:
                 error_msg = f"Error processing {os.path.basename(file_path)}: {str(e)}"
                 summaries.append({
                     'title': f"{i + 1}. {os.path.splitext(os.path.basename(file_path))[0]}",
                     'content': error_msg
                 })
-
-            self.progress_bar.setValue(i + 1)
 
         selected_lang = TRANSLATIONS.get(self.current_language, TRANSLATIONS["Italiano"])
 

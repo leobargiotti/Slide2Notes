@@ -240,7 +240,7 @@ def extract_text_from_pptx(file_path):
             for shape in notes_slide.shapes:
                 if hasattr(shape, "text") and shape.text.strip():
                     text += f"\nNote: {shape.text}"
-    return text
+    return text, len(presentation.slides)
 
 def extract_text_and_images_from_pptx(file_path):
     """
@@ -311,7 +311,7 @@ def extract_text_and_images_from_pptx(file_path):
                 if hasattr(shape, "text") and shape.text.strip():
                     text += f"\nNote: {shape.text}"
 
-    return text
+    return text, len(presentation.slides)
 
 def extract_text_from_pdf(file_path):
     """
@@ -331,8 +331,9 @@ def extract_text_from_pdf(file_path):
         # Extract annotations
         for annot in page.annots():
             text += f"\nNote: {annot.info['content']}"
+    n_pages=len(pdf_document)
     pdf_document.close()
-    return text
+    return text, n_pages
 
 def extract_text_and_images_from_pdf(file_path):
     """
@@ -403,9 +404,9 @@ def extract_text_and_images_from_pdf(file_path):
         for annot in page.annots():
             if "content" in annot.info and annot.info["content"].strip():
                 text += f"\nNote: {annot.info['content']}\n"
-
+    n_pages=len(pdf_document)
     pdf_document.close()
-    return text
+    return text, n_pages
 
 
 def create_summary_prompt(text, target_language):
@@ -420,20 +421,25 @@ def create_summary_prompt(text, target_language):
     Returns:
     - str: A formatted prompt string for generating the expanded text.
     """
-    return f"""Please rewrite the following content in {target_language} as a fully expanded, well-structured, and cohesive text. 
+    return f"""Please rewrite the following content in {target_language} as a fully expanded, cohesive, and detailed narrative.
 
-            CRITICAL INSTRUCTION: You MUST include EVERYTHING from:
-            1. The main text
-            2. All notes (marked with "Note:")
-            3. All image descriptions (marked with "Image Description:")
+                CRITICAL INSTRUCTION: You MUST include EVERYTHING from:
+                1. The main text
+                2. All notes (marked with "Note:")
+                3. All image descriptions (marked with "Image Description:")
+                4. All formulas (mathematical or otherwise), exactly as provided.
 
-            DO NOT OMIT any detail. Instead of summarizing, you should seamlessly integrate all these elements into a well-written, natural, and engaging narrative. 
-            Particularly for graphs, diagrams, charts, or visual elements described in the image descriptions, you MUST incorporate their complete content and meaning as if they were part of the main text. Do not abbreviate or condense image descriptions - fully explain what they show.
-            
-            The final summary should be a seamless integration of ALL information sources (main text, notes, and images), creating a complete and coherent narrative as if the information was all presented together originally without specify Note or Slide number.
-            
-            Text to summarize:
-            {text}
-            
-            Your summary should be well-structured and engaging, resembling a carefully written article. Avoid excessive conciseness or bullet-point formats. The reader should not be able to tell which parts came from notes or image descriptions versus the main text - it should all flow naturally as one cohesive document."""
+                **DO NOT include any structural references like "Page 1" or "Image 1". These references should not appear in the final text.**
 
+                Your output MUST fully retain **every single detail** provided. Do NOT summarize or omit any information, no matter how minor it seems. The final narrative should include **all information** from the text, notes, image descriptions, and formulas exactly as provided, **with no details left out**.
+
+                When describing visual elements such as graphs, charts, or diagrams, ensure that **every detail** of the description is fully explained, and their significance or meaning is clearly conveyed. **Do not abbreviate or condense** the descriptions of images—fully explain what they represent and their relevance to the overall content.
+
+                When formulas are included, you must **transcribe them exactly as they appear**, and explain their significance and how they fit into the broader context of the content. **Do not leave any formulas out** or reduce their complexity.
+
+                Your narrative should flow seamlessly, as if all the information was originally part of a cohesive document. The content should be integrated smoothly into one continuous narrative without separating the different components.
+
+                Text to expand:
+                {text}
+
+                The result should be detailed, thorough, and well-structured, resembling an informative article or lecture that seamlessly incorporates every detail from all sources without leaving anything out or overly condensing any part. Avoid bullet points and ensure the final text is rich in information and clarity."""
