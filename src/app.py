@@ -113,8 +113,6 @@ class DocumentSummaryApp(QMainWindow):
         self.process_btn.setEnabled(False)
 
         # Progress bar and status
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
         self.status_label = QLabel('')
 
         # Add widgets to layout
@@ -131,7 +129,6 @@ class DocumentSummaryApp(QMainWindow):
         layout.addWidget(self.files_list)
         layout.addLayout(file_buttons_layout)
         layout.addWidget(self.process_btn)
-        layout.addWidget(self.progress_bar)
         layout.addWidget(self.status_label)
 
         main_widget.setLayout(layout)
@@ -391,8 +388,6 @@ class DocumentSummaryApp(QMainWindow):
 
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Error saving file: {str(e)}")
-
-        self.progress_bar.setVisible(False)
 
 
 def main():
