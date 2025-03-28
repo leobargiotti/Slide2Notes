@@ -79,11 +79,11 @@ The application provides a graphical user interface.  Follow these steps:
 
 This section contains screenshots of the application's interface.
 
-This is a software interface for generating a word summary from PDF and PPTX files, allowing users to specify language, output format, and content options before generating the summary.
+This is a software interface for generating a DOCX summary and PDF from PPTX files, allowing users to specify language, output format, and content options before generating the summary.
 
 ![app.png](./images/app.png)
 
-The image shows a software interface currently processing a PPTX file to generate a word summary, with options for language, output format, and content inclusion.
+The image shows the interface currently processing a PPTX file to generate a DOCX and PDF summary with a progress bar.
 
 ![app_progress_bar.png](./images/app_progress_bar.png)
 
