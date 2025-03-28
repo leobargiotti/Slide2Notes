@@ -295,7 +295,7 @@ class DocumentSummaryApp(QMainWindow):
                 print(f"Error counting pages in {file_path}: {e}")
                 file_page_counts[file_path] = 0
 
-        progress = QProgressDialog("Processing Files...", None, 0, total_pages, self)
+        progress = QProgressDialog("Processing Files...", None, 0, total_pages+len(self.input_files), self)
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.show()
 
@@ -303,6 +303,7 @@ class DocumentSummaryApp(QMainWindow):
         current_page_progress = 0
 
         for i, file_path in enumerate(self.input_files):
+
             # Extract text based on file type
             file_extension = os.path.splitext(file_path)[1].lower()
 
@@ -310,14 +311,14 @@ class DocumentSummaryApp(QMainWindow):
             try:
                 if file_extension == '.pdf':
                     if self.extract_images:
-                        text, extracted_pages = extract_text_and_images_from_pdf(file_path)
+                        text, current_page_progress = extract_text_and_images_from_pdf(file_path, progress, current_page_progress)
                     else:
-                        text, extracted_pages = extract_text_from_pdf(file_path)
+                        text, current_page_progress = extract_text_from_pdf(file_path, progress, current_page_progress)
                 elif file_extension == '.pptx':
                     if self.extract_images:
-                        text, extracted_pages = extract_text_and_images_from_pptx(file_path)
+                        text, current_page_progress = extract_text_and_images_from_pptx(file_path, progress, current_page_progress)
                     else:
-                        text, extracted_pages = extract_text_from_pptx(file_path)
+                        text, current_page_progress = extract_text_from_pptx(file_path, progress, current_page_progress)
                 else:
                     continue
 
@@ -325,15 +326,15 @@ class DocumentSummaryApp(QMainWindow):
                 prompt = create_summary_prompt(text, self.output_language)
                 section_content = send_request_to_api(prompt)
 
+                # Update progress bar
+                current_page_progress += 1
+                progress.setValue(current_page_progress)
+                QApplication.processEvents()  # Ensure UI updates
+
                 summaries.append({
                     'title' : f"{i + 1}. {os.path.splitext(os.path.basename(file_path))[0]}",
                     'content': section_content
                 })
-
-                # Update progress bar
-                current_page_progress += extracted_pages
-                progress.setValue(current_page_progress)
-                QApplication.processEvents()  # Ensure UI updates
 
             except Exception as e:
                 error_msg = f"Error processing {os.path.basename(file_path)}: {str(e)}"

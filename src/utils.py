@@ -2,6 +2,8 @@ import requests
 import json
 import os
 import time
+
+from PyQt6.QtWidgets import QApplication
 from pptx import Presentation
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
@@ -13,6 +15,8 @@ from docx import Document
 import io
 from PIL import Image
 import base64
+
+from sympy.physics.units import current
 
 
 def send_request_to_api(prompt, max_retries=100):
@@ -217,16 +221,19 @@ def save_as_pdf_file(output_path, summaries):
     doc.build(story)
 
 
-def extract_text_from_pptx(file_path):
+def extract_text_from_pptx(file_path, progress, current_page_progress):
     """
     Extract text from a PowerPoint (.pptx) file, including slide content and notes.
 
     Parameters:
     - file_path (str): The path to the .pptx file from which text will be extracted.
+    - progress (QProgressBar): A progress bar to update when extracting text.
+    - current_page_progress (int): The current page number.
 
     Returns:
     - str: A string containing the extracted text from the slides and their notes,
            with slide content separated by newlines and notes prefixed with "Note:".
+    - int: The updated current page number.
     """
     text = ""
     presentation = Presentation(file_path)
@@ -240,22 +247,24 @@ def extract_text_from_pptx(file_path):
             for shape in notes_slide.shapes:
                 if hasattr(shape, "text") and shape.text.strip():
                     text += f"\nNote: {shape.text}"
-    return text, len(presentation.slides)
+        current_page_progress += 1
+        progress.setValue(current_page_progress)
+        QApplication.processEvents()
+    return text, current_page_progress
 
-def extract_text_and_images_from_pptx(file_path):
+def extract_text_and_images_from_pptx(file_path, progress, current_page_progress):
     """
-    Extract text and images from a PowerPoint (.pptx) file, including slide content,
-    notes, and image descriptions using AI.
+    Extract text and images from a PowerPoint (.pptx) file, including slide content, notes, and AI-generated descriptions of images.
 
     Parameters:
-    - file_path (str): The path to the .pptx file from which text will be extracted.
+    - file_path (str): The path to the .pptx file from which text and images will be extracted.
+    - progress (QProgressBar): A progress bar to update when extracting text and images.
+    - current_page_progress (int): The current page number.
 
     Returns:
-    - str: A string containing the extracted text from the slides, their notes,
-           and AI-generated descriptions of images, with slide content separated
-           by newlines and notes prefixed with "Note:".
+    - str: A string containing the extracted text from the slides and their notes, with slide content separated by newlines and notes prefixed with Note:, and AI-generated image descriptions prefixed with Image Description:.
+    - int: The updated current page number.
     """
-
     text = ""
     presentation = Presentation(file_path)
 
@@ -311,18 +320,25 @@ def extract_text_and_images_from_pptx(file_path):
                 if hasattr(shape, "text") and shape.text.strip():
                     text += f"\nNote: {shape.text}"
 
-    return text, len(presentation.slides)
+        current_page_progress += 1
+        progress.setValue(current_page_progress)
+        QApplication.processEvents()
 
-def extract_text_from_pdf(file_path):
+    return text, current_page_progress
+
+def extract_text_from_pdf(file_path, progress, current_page_progress):
     """
     Extract text from a PDF file, including page content and annotations.
 
     Parameters:
     - file_path (str): The path to the PDF file from which text will be extracted.
+    - progress (QProgressBar): A progress bar to update when extracting text.
+    - current_page_progress (int): The current page number.
 
     Returns:
-    - str: A string containing the extracted text from the pages and their annotations,
-           with page content separated by newlines and annotations prefixed with "Note:".
+    - str: A string containing the extracted text from the PDF file,
+           with annotations prefixed with "Note:".
+    - int: The updated current page number.
     """
     text = ""
     pdf_document = fitz.open(file_path)
@@ -331,24 +347,25 @@ def extract_text_from_pdf(file_path):
         # Extract annotations
         for annot in page.annots():
             text += f"\nNote: {annot.info['content']}"
-    n_pages=len(pdf_document)
+        current_page_progress += 1
+        progress.setValue(current_page_progress)
+        QApplication.processEvents()
     pdf_document.close()
-    return text, n_pages
+    return text, current_page_progress
 
-def extract_text_and_images_from_pdf(file_path):
+def extract_text_and_images_from_pdf(file_path, progress, current_page_progress):
     """
-    Extract text and images from a PDF file, including page content, annotations,
-    and AI-generated descriptions of images.
+    Extract text and images from a PDF file, including page content, annotations, and images.
 
     Parameters:
-    - file_path (str): The path to the PDF file from which content will be extracted.
+    - file_path (str): The path to the PDF file from which text and images will be extracted.
+    - progress (QProgressBar): A progress bar to update when extracting text and images.
+    - current_page_progress (int): The current page number.
 
     Returns:
-    - str: A string containing the extracted text from the pages, their annotations,
-           and AI-generated descriptions of images, with page content separated
-           by newlines and annotations prefixed with "Note:".
+    - str: A string containing the extracted text from the PDF file, with annotations prefixed with Note: and AI-generated image descriptions prefixed with Image Description:.
+    - int: The updated current page number.
     """
-
     text = ""
     pdf_document = fitz.open(file_path)
 
@@ -404,9 +421,13 @@ def extract_text_and_images_from_pdf(file_path):
         for annot in page.annots():
             if "content" in annot.info and annot.info["content"].strip():
                 text += f"\nNote: {annot.info['content']}\n"
-    n_pages=len(pdf_document)
+
+        current_page_progress += 1
+        progress.setValue(current_page_progress)
+        QApplication.processEvents()
+
     pdf_document.close()
-    return text, n_pages
+    return text, current_page_progress
 
 
 def create_summary_prompt(text, target_language):
